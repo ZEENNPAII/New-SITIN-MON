@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Home - CCS Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="bar-chart-2"></i> Statistics
+            </div>
+            <div class="card-body">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-label">Students Registered</div>
+                        <div class="stat-value">{{ students_registered }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Currently Sit-In</div>
+                        <div class="stat-value">{{ currently_sit_in }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Sit-In</div>
+                        <div class="stat-value">{{ total_sit_in }}</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+                
+                <!-- Hidden elements to store chart data -->
+                <div id="prog-labels" style="display: none;">{{ prog_labels | safe }}</div>
+                <div id="prog-counts" style="display: none;">{{ prog_counts | safe }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="message-square"></i> Announcement
+            </div>
+            <div class="card-body">
+                {% if session.user_role == 'admin' %}
+                <form action="{{ url_for('add_announcement') }}" method="post">
+                    <div class="form-group">
+                        <textarea name="content" class="form-control" rows="4" placeholder="New Announcement" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+                {% endif %}
+                
+                <h4 style="margin-top: 20px;">Posted Announcement</h4>
+                <div class="announcements">
+                    {% if announcements %}
+                        {% for announcement in announcements %}
+                        <div class="announcement-item">
+                            <div class="announcement-header">
+                                <span>{{ announcement.posted_by }}</span>
+                                <span class="announcement-date">{{ announcement.date_posted }}</span>
+                                {% if session.user_role == 'admin' %}
+                                <span class="announcement-actions">
+                                    <button class="btn btn-sm btn-info edit-announcement-btn" data-id="{{ announcement.id }}" data-content="{{ announcement.content }}">
+                                        <i data-feather="edit-2" style="width: 14px; height: 14px;"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-announcement-btn" data-id="{{ announcement.id }}">
+                                        <i data-feather="trash-2" style="width: 14px; height: 14px;"></i> Delete
+                                    </button>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="announcement-content" id="announcement-content-{{ announcement.id }}">
+                                {{ announcement.content }}
+                            </div>
+                            {% if session.user_role == 'admin' %}
+                            <div class="announcement-edit-form" id="announcement-edit-form-{{ announcement.id }}" style="display: none;">
+                                <form action="{{ url_for('edit_announcement', announcement_id=announcement.id) }}" method="post">
+                                    <div class="form-group">
+                                        <textarea name="content" class="form-control" rows="3" required>{{ announcement.content }}</textarea>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <button type="button" class="btn btn-sm btn-secondary cancel-edit-btn">Cancel</button>
+                                        <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No announcements yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Laboratory Rules Section -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <i data-feather="clipboard"></i> Laboratory Rules
+    </div>
+    <div class="card-body">
+        <h4>General Computer Laboratory Rules</h4>
+        <ol>
+            <li>Students must present a valid ID to use the laboratory facilities.</li>
+            <li>No food or drinks allowed inside the laboratory.</li>
+            <li>Keep the laboratory clean and organized.</li>
+            <li>Report any hardware or software issues to the laboratory staff.</li>
+            <li>Do not install or download unauthorized software.</li>
+            <li>Save your work regularly and log out properly when finished.</li>
+            <li>Follow proper shut down procedures when leaving.</li>
+            <li>Use headphones when audio is required for your work.</li>
+            <li>Internet usage should be for academic purposes only.</li>
+            <li>Be respectful to other students and laboratory staff.</li>
+        </ol>
+        
+        <h4>Sit-In Guidelines</h4>
+        <ol>
+            <li>Sign in using the laboratory's sit-in system.</li>
+            <li>The maximum sit-in duration is 3 hours per session.</li>
+            <li>Students must vacate the laboratory when their session is complete.</li>
+            <li>Priority is given to students with scheduled classes.</li>
+            <li>Provide feedback about your laboratory experience.</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get chart data from hidden elements
+        const progLabels = JSON.parse(document.getElementById('prog-labels').textContent);
+        const progCounts = JSON.parse(document.getElementById('prog-counts').textContent);
+        
+        // Create dashboard chart
+        createDashboardCharts(progLabels, progCounts);
+        
+        // Handle announcement edit buttons
+        const editBtns = document.querySelectorAll('.edit-announcement-btn');
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const announcementId = this.getAttribute('data-id');
+                // Hide content div and show edit form
+                document.getElementById(`announcement-content-${announcementId}`).style.display = 'none';
+                document.getElementById(`announcement-edit-form-${announcementId}`).style.display = 'block';
+            });
+        });
+        
+        // Handle cancel edit buttons
+        const cancelBtns = document.querySelectorAll('.cancel-edit-btn');
+        cancelBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const formDiv = this.closest('.announcement-edit-form');
+                const announcementId = formDiv.id.split('-').pop();
+                // Show content div and hide edit form
+                document.getElementById(`announcement-content-${announcementId}`).style.display = 'block';
+                formDiv.style.display = 'none';
+            });
+        });
+        
+        // Handle announcement delete buttons
+        const deleteBtns = document.querySelectorAll('.delete-announcement-btn');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this announcement?')) {
+                    const announcementId = this.getAttribute('data-id');
+                    window.location.href = `/delete-announcement/${announcementId}`;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
