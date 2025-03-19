@@ -26,6 +26,52 @@
         {% endwith %}
         
         <form action="{{ url_for('register') }}" method="post" id="register-form">
+            <!-- New Fields -->
+            <div class="form-group">
+                <label for="idno" class="form-label">ID Number (IDNO):</label>
+                <input type="text" id="idno" name="idno" class="form-control" value="{{ request.form.get('idno', '') }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastname" class="form-label">Last Name:</label>
+                <input type="text" id="lastname" name="lastname" class="form-control" value="{{ request.form.get('lastname', '') }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="firstname" class="form-label">First Name:</label>
+                <input type="text" id="firstname" name="firstname" class="form-control" value="{{ request.form.get('firstname', '') }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="midname" class="form-label">Middle Name:</label>
+                <input type="text" id="midname" name="midname" class="form-control" value="{{ request.form.get('midname', '') }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="course" class="form-label">Course:</label>
+                <select id="course" name="course" class="form-control" required>
+                    <option value="BSIT" {% if request.form.get('course') == 'BSIT' %}selected{% endif %}>BSIT</option>
+                    <option value="BSCS" {% if request.form.get('course') == 'BSCS' %}selected{% endif %}>BSCS</option>
+                    <option value="BSCE" {% if request.form.get('course') == 'BSCE' %}selected{% endif %}>BSCE</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="yearlevel" class="form-label">Year Level:</label>
+                <select id="yearlevel" name="yearlevel" class="form-control" required>
+                    <option value="1" {% if request.form.get('yearlevel') == '1' %}selected{% endif %}>1st Year</option>
+                    <option value="2" {% if request.form.get('yearlevel') == '2' %}selected{% endif %}>2nd Year</option>
+                    <option value="3" {% if request.form.get('yearlevel') == '3' %}selected{% endif %}>3rd Year</option>
+                    <option value="4" {% if request.form.get('yearlevel') == '4' %}selected{% endif %}>4th Year</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ request.form.get('email', '') }}" required>
+            </div>
+            
+            <!-- Existing Fields -->
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" id="username" name="username" class="form-control" required>
